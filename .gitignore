@@ -24,3 +24,4 @@ maven.sh
 .project
 /.externalToolBuilders/
 /.settings/
+/WebContent/WEB-INF/classes/

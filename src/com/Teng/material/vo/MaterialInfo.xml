@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MaterialInfo">
+	<resultMap type="materialInfoVo" id="materialInfoVo">
+			<result column="material_id" property="materialId"/>
+			<result column="material_name" property="materialName"/>
+			<result column="material_norms" property="materialNorms"/>
+			<result column="material_number" property="materialNumber"/>
+			<result column="material_factory" property="materialFactory"/>
+			<result column="create_time" property="createTime"/>
+			<result column="update_time" property="updateTime"/>
+			<result column="material_price_in_d" property="materialPriceInD"/>
+			<result column="material_price_out_d" property="materialPriceOutD"/>
+	</resultMap>
+	
+	<resultMap type="materialPriceVo" id="materialPriceVo">
+		<result column="material_id" property="materialId"/>
+		<result column="member_id" property="memberId"/>
+		<result column="material_price_in" property="materialPriceIn"/>
+		<result column="material_price_out" property="materialPriceOut"/>
+		<result column="member_name" property="memberName"/>
+	</resultMap>
+	<resultMap type="materialNumChangeLogVo" id="materialNumChangeLogVo">
+		<result column="log_id" property="log_id"/>
+		<result column="material_id" property="material_id"/>
+		<result column="change_type" property="change_type"/>
+		<result column="change_number" property="change_number"/>
+		<result column="change_desc" property="change_desc"/>
+	</resultMap>
+	
+	<insert id="insertMaterialInfo"  parameterType="materialInfoVo">
+		 insert into material_info (
+    	 	material_id,
+    	 	material_name,
+    	 	material_norms,
+    	 	material_number,
+    	 	material_factory,
+    	 	material_price_in_d,
+    	 	material_price_out_d
+		 )
+		 values(
+    	 	#{materialId},
+    	 	#{materialName},
+    	 	#{materialNorms},
+    	 	#{materialNumber},
+    	 	#{materialFactory},
+    	 	#{materialPriceInD,jdbcType=NUMERIC},
+    	 	#{materialPriceOutD,jdbcType=NUMERIC}
+		 )
+	</insert>
+	<update id="updateMaterialInfo" parameterType="materialInfoVo">
+		update material_info
+		<set>
+			<if test="materialName != '' and materialName != null">
+			material_name=#{materialName},
+			</if>
+			<if test="materialNorms != '' and materialNorms != null">
+			material_norms=#{materialNorms},
+			</if>
+			<if test="materialNumber != '' and materialNumber != null">
+			material_number=#{materialNumber},
+			</if>
+			<if test="materialFactory != '' and materialFactory != null">
+			material_factory=#{materialFactory},
+			</if>
+			<if test="materialPriceInD != '' and materialPriceInD != null">
+			material_price_in_d=#{materialPriceInD,jdbcType=NUMERIC},
+			</if>
+			<if test="materialPriceOutD != '' and materialPriceOutD != null">
+			material_price_out_d=#{materialPriceOutD,jdbcType=NUMERIC},
+			</if>
+			update_time=now()
+		</set>
+		where
+			material_id=#{materialId}
+	</update>
+	<select id="selectMaterialInfo" parameterType="materialInfoVo" resultMap="materialInfoVo">
+		select 
+    	 	material_id,
+    	 	material_name,
+    	 	material_norms,
+    	 	material_number,
+    	 	material_factory,
+    	 	date_format(create_time,'%Y-%m-%d %T') create_time,
+    	 	date_format(update_time,'%Y-%m-%d %T') update_time,
+    	 	material_price_in_d,
+    	 	material_price_out_d
+		from material_info
+		<where>
+			<if test="materialName != '' and materialName != null">
+			material_name like CONCAT('%','${materialName}','%' )
+			</if>
+		</where> 
+	</select>
+	<select id="queryMaterialInfoCount" parameterType="materialInfoVo" resultType="java.lang.Integer">
+		select 
+		count(1) as COUNT_RESULTS
+		from material_info
+		<where>
+			<if test="materialName != '' and materialName != null">
+			material_name like CONCAT('%','${materialName}','%' )
+			</if>
+		</where>
+	</select>
+	
+	<sql id="selectMaterialInfoPage">
+		select 
+    	 	material_id,
+    	 	material_name,
+    	 	material_norms,
+    	 	material_number,
+    	 	material_factory,
+    	 	date_format(create_time,'%Y-%m-%d %T') create_time,
+    	 	date_format(update_time,'%Y-%m-%d %T') update_time,
+   	 		material_price_in_d,
+    	 	material_price_out_d
+		from material_info
+		<where>
+			<if test="materialName != '' and materialName != null">
+			material_name like CONCAT('%','${materialName}','%' )
+			</if>
+		</where> 
+	</sql>
+	
+	<select id="queryMaterialInfoVoList" parameterType="materialInfoVo" resultMap="materialInfoVo">
+		<include refid="selectMaterialInfoPage"/>
+		<include refid="pageAfter"/>
+	</select>
+	<sql id="pageAfter">
+		limit #{start},#{limit}
+	</sql>
+	
+	<!-- 材料价格相关 -->
+	<select id="selectMaterialPrice" parameterType="materialPriceVo" resultMap="materialPriceVo">
+		select mp.material_id , mp.member_id , mp.material_price_in , mp.material_price_out , mi.member_name 
+		from material_sale_price mp ,member_info mi
+		where mp.member_id=mi.member_id and mp.material_id=#{materialId}
+	</select>
+	<update id="updateMaterialPrice" parameterType="materialPriceVo">
+		update material_sale_price set material_price_in=#{materialPriceIn,jdbcType=NUMERIC} , material_price_out=#{materialPriceOut,jdbcType=NUMERIC}
+		where material_id=#{materialId} and member_id=#{memberId}
+	</update>
+	<insert id="insertMaterialPrice" parameterType="materialPriceVo">
+		insert into material_sale_price (material_id,member_id,material_price_in,material_price_out) 
+		values (#{materialId},#{memberId},#{materialPriceIn,jdbcType=NUMERIC},#{materialPriceOut,jdbcType=NUMERIC})
+	</insert>
+	
+	<update id="addMaterialNumber" parameterType="materialInfoVo">
+		update material_info set material_number = material_number + #{materialNumber,jdbcType=NUMERIC} 
+		where material_id = #{materialId}
+	</update>
+	<update id="cutMaterialNumber" parameterType="materialInfoVo">
+		update material_info set material_number = material_number - #{materialNumber,jdbcType=NUMERIC} 
+		where material_id = #{materialId}
+	</update>
+	
+	<insert id="insertNumChangeLog" parameterType="materialNumChangeLogVo">
+		insert into material_num_change_log (log_id,material_id,change_type,change_number,change_desc)
+		values (#{log_id},#{material_id},#{change_type},#{change_number},#{change_desc})
+	</insert>
+	
+</mapper>

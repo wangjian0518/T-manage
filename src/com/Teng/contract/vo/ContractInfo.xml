@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ContractInfo">
+	<resultMap type="contractInfoVo" id="contractInfoVo">
+			<result column="contract_id" property="contractId"/>
+			<result column="contract_title" property="contractTitle"/>
+			<result column="contract_from" property="contractFrom"/>
+			<result column="contract_to" property="contractTo"/>
+			<result column="contract_type" property="contractType"/>
+			<result column="create_time" property="createTime"/>
+			<result column="update_time" property="updateTime"/>
+	</resultMap>
+	<resultMap type="contractContentVo" id="contractContentVo">
+			<result column="content_id" property="content_id"/>
+			<result column="contract_id" property="contract_id"/>
+			<result column="material_id" property="material_id"/>
+			<result column="material_count" property="material_count"/>
+			<result column="content_status" property="content_status"/>
+			<result column="material_name" property="material_name"/>
+	</resultMap>
+	<resultMap type="contractMaterialSalePriceVo" id="contractMaterialSalePriceVo">
+			<result column="contract_id" property="contract_id"/>
+			<result column="material_id" property="material_id"/>
+			<result column="member_id" property="member_id"/>
+			<result column="sale_price" property="sale_price"/>
+			<result column="in_price" property="in_price"/>
+			<result column="member_name" property="member_name"/>
+	</resultMap>
+	
+	
+	<insert id="insertContractInfo"  parameterType="contractInfoVo">
+		 insert into contract_info (
+    	 	contract_id,
+    	 	contract_title,
+    	 	contract_from,
+    	 	contract_to,
+    	 	contract_type
+		 )
+		 values(
+    	 	#{contractId},
+    	 	#{contractTitle},
+    	 	#{contractFrom},
+    	 	#{contractTo},
+    	 	#{contractType}
+		 )
+	</insert>
+	<update id="updateContractInfo" parameterType="contractInfoVo">
+		update contract_info
+		<set>
+			<if test="contractTitle != '' and contractTitle != null">
+			contract_title=#{contractTitle},
+			</if>
+			<if test="contractFrom != '' and contractFrom != null">
+			contract_from=#{contractFrom},
+			</if>
+			<if test="contractTo != '' and contractTo != null">
+			contract_to=#{contractTo},
+			</if>
+			<if test="contractType != '' and contractType != null">
+			contract_type=#{contractType},
+			</if>
+			update_time=now()
+		</set>
+		where
+			contract_id=#{contractId}
+	</update>
+	<select id="selectContractInfo" parameterType="contractInfoVo" resultMap="contractInfoVo">
+		select 
+    	 	contract_id,
+    	 	contract_title,
+    	 	contract_from,
+    	 	contract_to,
+    	 	contract_type,
+    	 	date_format(create_time,'%Y-%m-%d %T') create_time,
+    	 	date_format(update_time,'%Y-%m-%d %T') update_time
+		from contract_info
+		<where> 1=1 
+			<if test="contractId != '' and contractId != null">
+			and contract_id=#{contractId}
+			</if>
+			<if test="contractTitle != '' and contractTitle != null">
+			and contract_title like CONCAT('%','${contractTitle}','%' )
+			</if>
+			<if test="contractFrom != '' and contractFrom != null">
+			and contract_from like CONCAT('%','${contractFrom}','%' )
+			</if>
+			<if test="contractTo != '' and contractTo != null">
+			and contract_to like CONCAT('%','${contractTo}','%' )
+			</if>
+			<if test="contractType != '' and contractType != null">
+			and contract_type=#{contractType}
+			</if>
+		</where> 
+	</select>
+	<select id="queryContractInfoCount" parameterType="contractInfoVo" resultType="java.lang.Integer">
+		select 
+		count(1) as COUNT_RESULTS
+		from contract_info
+		<where> 1=1 
+			<if test="contractId != '' and contractId != null">
+			and contract_id=#{contractId}
+			</if>
+			<if test="contractTitle != '' and contractTitle != null">
+			and contract_title like CONCAT('%','${contractTitle}','%' )
+			</if>
+			<if test="contractFrom != '' and contractFrom != null">
+			and contract_from like CONCAT('%','${contractFrom}','%' )
+			</if>
+			<if test="contractTo != '' and contractTo != null">
+			and contract_to like CONCAT('%','${contractTo}','%' )
+			</if>
+			<if test="contractType != '' and contractType != null">
+			and contract_type=#{contractType}
+			</if>
+		</where>
+	</select>
+	
+	<sql id="selectContractInfoPage">
+		select 
+    	 	contract_id,
+    	 	contract_title,
+    	 	contract_from,
+    	 	contract_to,
+    	 	contract_type,
+    	 	date_format(create_time,'%Y-%m-%d %T') create_time,
+    	 	date_format(update_time,'%Y-%m-%d %T') update_time
+		from contract_info
+		<where> 1=1 
+			<if test="contractId != '' and contractId != null">
+			and contract_id=#{contractId}
+			</if>
+			<if test="contractTitle != '' and contractTitle != null">
+			and contract_title like CONCAT('%','${contractTitle}','%' )
+			</if>
+			<if test="contractFrom != '' and contractFrom != null">
+			and contract_from like CONCAT('%','${contractFrom}','%' )
+			</if>
+			<if test="contractTo != '' and contractTo != null">
+			and contract_to like CONCAT('%','${contractTo}','%' )
+			</if>
+			<if test="contractType != '' and contractType != null">
+			and contract_type=#{contractType}
+			</if>
+		</where> 
+	</sql>
+	
+	<select id="queryContractInfoVoList" parameterType="contractInfoVo" resultMap="contractInfoVo">
+		<include refid="selectContractInfoPage"/>
+		<include refid="pageAfter"/>
+	</select>
+	<sql id="pageAfter">
+		limit #{start},#{limit}
+	</sql>
+	
+	<!-- content -->
+	<select id="queryContractContentList" parameterType="contractContentVo" resultMap="contractContentVo">
+		select cc.content_id,cc.contract_id,cc.material_id,cc.material_count,cc.content_status,mi.material_name 
+		from contract_content_info cc ,material_info mi
+		where cc.material_id=mi.material_id and cc.contract_id=#{contract_id}
+	</select>
+	
+	<insert id="insertContractContent" parameterType="contractContentVo">
+		insert into contract_content_info (content_id,contract_id,material_id,material_count,content_status)
+		values (#{content_id},#{contract_id},#{material_id},#{material_count},#{content_status})
+	</insert>
+	
+	<update id="updateContractContent" parameterType="contractContentVo">
+		update contract_content_info set material_count=#{material_count} , content_status=#{content_status}
+		where content_id=#{content_id}
+	</update>
+	
+	<!-- price -->
+	<select id="queryContractSalePriceList" parameterType="contractMaterialSalePriceVo" resultMap="contractMaterialSalePriceVo">
+		select cm.contract_id,cm.material_id,cm.member_id,cm.sale_price,cm.in_price,mi.member_name 
+		from contract_material_sale_price cm ,member_info mi
+		where cm.member_id=mi.member_id and cm.contract_id=#{contract_id}
+		order by cm.member_id
+	</select>
+	
+	<insert id="insertContractMaterialSalePrice" parameterType="contractMaterialSalePriceVo">
+		insert into contract_material_sale_price (contract_id,material_id,member_id,sale_price,in_price)
+		values (#{contract_id},#{material_id},#{member_id},
+				(select material_price_out from material_sale_price where material_id=#{material_id} and member_id=#{member_id}),
+				(select material_price_in from material_sale_price where material_id=#{material_id} and member_id=#{member_id}))
+	</insert>
+
+	<update id="updateContractMaterialSalePrice" parameterType="contractMaterialSalePriceVo">
+		update contract_material_sale_price set sale_price=#{sale_price,jdbcType=NUMERIC},in_price=#{in_price,jdbcType=NUMERIC}
+		where contract_id=#{contract_id} and material_id=#{material_id} and member_id=#{member_id} 
+	</update>
+	
+</mapper>
